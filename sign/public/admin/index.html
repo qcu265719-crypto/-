@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>管理后台 · 山水留痕电子签名墙</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <!-- 登录 -->
+  <div class="login" id="login">
+    <form class="login-card" id="login-form" autocomplete="off">
+      <div class="logo">
+        <svg viewBox="0 0 48 48" fill="none">
+          <path d="M4 36c6-9 10-14 15-14s9 5 15 15" stroke="#e0b45c" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="33" cy="13" r="4" stroke="#f7f2e8" stroke-width="1.6" opacity=".8"/>
+          <path d="M9 40c5-6 8-9 12-9 5 0 8 4 13 9" stroke="#e0b45c" stroke-width="1.4" opacity=".5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1>签名墙管理后台</h1>
+      <p>请输入管理员口令</p>
+      <label class="field-row">
+        <span>口令</span>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+      </label>
+      <button class="btn block" id="login-btn" type="submit">登录</button>
+      <div class="login-error" id="login-error" hidden></div>
+      <p class="login-tip">首次登录口令为 <b>admin123</b>，登录后请立即在「系统状态」中修改。</p>
+    </form>
+  </div>
+
+  <!-- 控制台 -->
+  <div class="shell" id="app" hidden>
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="logo">
+          <svg viewBox="0 0 48 48" fill="none">
+            <path d="M4 36c6-9 10-14 15-14s9 5 15 15" stroke="#e0b45c" stroke-width="2.4" stroke-linecap="round"/>
+            <circle cx="33" cy="13" r="4" stroke="#f7f2e8" stroke-width="1.6" opacity=".8"/>
+          </svg>
+        </div>
+        <div>
+          <b>山水留痕</b>
+          <small>活动管理后台</small>
+        </div>
+      </div>
+
+      <nav id="nav">
+        <button class="nav-item active" data-tab="overview" type="button">概览</button>
+        <button class="nav-item" data-tab="signatures" type="button">签名墙 <span class="badge" id="nav-pending" hidden>0</span></button>
+        <button class="nav-item" data-tab="words" type="button">敏感词</button>
+        <button class="nav-item" data-tab="config" type="button">活动配置</button>
+        <button class="nav-item" data-tab="export" type="button">数据导出</button>
+        <button class="nav-item" data-tab="system" type="button">系统状态</button>
+      </nav>
+
+      <div class="side-foot">
+        <a href="/" target="_blank" rel="noopener">打开大屏 ↗</a>
+        <a href="/mobile" target="_blank" rel="noopener">手机签名页 ↗</a>
+        <a href="/admin/qr.html" target="_blank" rel="noopener">其他设备访问 ↗</a>
+        <button class="btn secondary" id="logout" type="button">退出登录</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="page-title">概览</h2>
+          <p id="page-sub">实时掌握活动现场数据</p>
+        </div>
+        <div class="top-status">
+          <span class="dot" id="ws-dot"></span>
+          <span id="ws-text">实时同步</span>
+          <span id="clock"></span>
+        </div>
+      </header>
+
+      <div class="login-error" id="must-change" hidden>
+        当前仍在使用初始口令，请前往「系统状态」修改口令，避免现场被误操作。
+      </div>
+
+      <!-- 概览 -->
+      <section class="tab active" data-tab="overview">
+        <div class="grid stats" style="margin-bottom: 18px">
+          <div class="stat accent"><div class="label">今日新增</div><div class="value" id="ov-today">0</div></div>
+          <div class="stat"><div class="label">累计签名</div><div class="value" id="ov-total">0</div></div>
+          <div class="stat green"><div class="label">展示中</div><div class="value" id="ov-approved">0</div></div>
+          <div class="stat red"><div class="label">待审核</div><div class="value" id="ov-pending">0</div></div>
+          <div class="stat"><div class="label">含留影</div><div class="value" id="ov-photos">0</div></div>
+          <div class="stat"><div class="label">敏感词库</div><div class="value" id="ov-words">0</div></div>
+        </div>
+
+        <div class="columns">
+          <div class="card">
+            <h3>最新上墙</h3>
+            <p class="sub">实时同步，点击「签名墙」可审核、隐藏或删除</p>
+            <div class="list" id="recent-list"><div class="empty">还没有签名，等待第一位游客…</div></div>
+          </div>
+          <div class="card">
+            <h3>现场操作</h3>
+            <p class="sub">活动开始前建议先「一键清屏」，并确认大屏已打开。</p>
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <button class="btn" id="btn-open-wall" type="button">打开大屏展示</button>
+              <button class="btn secondary" id="btn-refresh" type="button">刷新数据</button>
+              <button class="btn danger" id="btn-clear-quick" type="button">一键清屏（清空所有签名）</button>
+            </div>
+            <p class="hint" style="margin-top: 14px">
+              清屏会同时删除签名与留影文件，并在 <code>data/exports</code> 留下自动备份。<br>
+              活动结束后建议先导出数据，再清屏。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 签名墙 -->
+      <section class="tab" data-tab="signatures">
+        <div class="card">
+          <div class="toolbar">
+            <input type="text" id="sig-search" placeholder="搜索昵称 / 留言 / ID">
+            <select id="sig-status">
+              <option value="all">全部状态</option>
+              <option value="approved">展示中</option>
+              <option value="pending">待审核</option>
+              <option value="hidden">已隐藏</option>
+            </select>
+            <button class="btn secondary" id="sig-refresh" type="button">刷新</button>
+            <span class="hint" id="sig-count" style="margin-left: auto; align-self: center"></span>
+          </div>
+          <div class="list" id="sig-list"><div class="empty">加载中…</div></div>
+        </div>
+      </section>
+
+      <!-- 敏感词 -->
+      <section class="tab" data-tab="words">
+        <div class="columns">
+          <div class="card">
+            <h3>词库</h3>
+            <p class="sub">命中后按「活动配置 → 审核设置」中的策略打码或拒收。共 <b id="word-count">0</b> 个。</p>
+            <div class="words" id="word-list"></div>
+            <p class="hint" style="margin-top: 16px">
+              支持全角、空格、符号混排识别（例如「傻 逼」「ＳＢ」都能命中）。
+            </p>
+          </div>
+          <div class="card">
+            <h3>添加 / 批量导入</h3>
+            <p class="sub">每行一个词，或用逗号分隔</p>
+            <div class="inline-form">
+              <input type="text" id="word-input" placeholder="输入敏感词" maxlength="24">
+              <button class="btn" id="word-add" type="button">添加</button>
+            </div>
+            <textarea id="word-batch" placeholder="批量粘贴，例如：&#10;代开发票&#10;加微信" style="min-height: 130px"></textarea>
+            <div class="form-actions" style="justify-content: space-between">
+              <button class="btn secondary small" id="word-export" type="button">导出词库</button>
+              <button class="btn" id="word-import" type="button">批量导入</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 活动配置 -->
+      <section class="tab" data-tab="config">
+        <form id="config-form">
+          <div class="card">
+            <h3>活动信息</h3>
+            <p class="sub">显示在大屏顶部与手机签名页</p>
+            <div class="form-grid">
+              <label class="field-row"><span>活动主标题</span><input type="text" id="ev-title" maxlength="30" placeholder="山水留痕"></label>
+              <label class="field-row"><span>副标题 / 标语</span><input type="text" id="ev-subtitle" maxlength="40" placeholder="落笔成景 · 把此刻留在山水之间"></label>
+              <label class="field-row"><span>主办方</span><input type="text" id="ev-org" maxlength="40"></label>
+              <label class="field-row"><span>场地</span><input type="text" id="ev-venue" maxlength="40"></label>
+              <label class="field-row"><span>活动日期</span><input type="date" id="ev-date"></label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>视觉与主题</h3>
+            <p class="sub">主视觉色会同步到大屏、手机端与海报</p>
+            <div class="form-grid">
+              <label class="field-row">
+                <span>背景主题</span>
+                <select id="theme-preset">
+                  <option value="ink">水墨晨曦（默认）</option>
+                  <option value="dawn">暖霞山色</option>
+                  <option value="night">星河夜色</option>
+                </select>
+              </label>
+              <label class="field-row"><span>主强调色</span><input type="color" id="theme-accent"></label>
+              <label class="field-row"><span>纸张色</span><input type="color" id="theme-paper"></label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>大屏行为</h3>
+            <p class="sub">签名墙的展示形态与待机逻辑</p>
+            <div class="form-grid">
+              <label class="field-row">
+                <span>签名墙形态</span>
+                <select id="wall-mode">
+                  <option value="globe">地球仪 · 签名环绕山水</option>
+                  <option value="star">星空 · 签名漂浮深空</option>
+                  <option value="bubble">气泡 · 签名缓缓上升</option>
+                </select>
+              </label>
+              <label class="field-row"><span>最多同时展示（8–200）</span><input type="number" id="wall-max" min="8" max="200" step="1"></label>
+              <label class="field-row"><span>待机返回时间（秒）</span><input type="number" id="wall-standby" min="10" max="600" step="5"></label>
+              <label class="field-row span-2">
+                <span>对外访问地址（二维码 / 海报 / 其他设备打开后台）</span>
+                <select id="mobile-url-select" style="margin-bottom: 8px"></select>
+                <input type="text" id="mobile-url" placeholder="局域网留空自动识别；公网/隧道填 https://域名">
+              </label>
+            </div>
+            <div class="form-grid" style="margin-top: 14px">
+              <label class="toggle"><input type="checkbox" id="wall-qr"> 大屏显示签名二维码</label>
+              <label class="toggle"><input type="checkbox" id="wall-ticker"> 底部滚动最新留言</label>
+              <label class="toggle"><input type="checkbox" id="wall-sound"> 上墙音效</label>
+            </div>
+            <p class="hint" id="mobile-url-hint" style="margin-top: 12px"></p>
+          </div>
+
+          <div class="card">
+            <h3>互动设置</h3>
+            <div class="form-grid">
+              <label class="toggle"><input type="checkbox" id="kiosk-camera"> 大屏支持拍照留影（需摄像头）</label>
+              <label class="toggle"><input type="checkbox" id="kiosk-print"> 大屏支持打印留念</label>
+              <label class="toggle"><input type="checkbox" id="kiosk-msg"> 允许填写留言</label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>审核设置</h3>
+            <div class="form-grid">
+              <label class="toggle"><input type="checkbox" id="mod-auto"> 自动通过（关闭后需人工审核）</label>
+              <label class="field-row">
+                <span>敏感词命中策略</span>
+                <select id="mod-action">
+                  <option value="mask">自动打码后上墙</option>
+                  <option value="reject">直接拒收并提示</option>
+                </select>
+              </label>
+              <label class="field-row"><span>昵称最大长度</span><input type="number" id="mod-maxname" min="2" max="32"></label>
+              <label class="field-row"><span>留言最大长度</span><input type="number" id="mod-maxmsg" min="10" max="200"></label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn secondary" id="config-reset" type="button">重新载入</button>
+            <button class="btn" id="config-save" type="submit">保存配置</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- 导出 -->
+      <section class="tab" data-tab="export">
+        <div class="columns">
+          <div class="card">
+            <h3>导出签名数据</h3>
+            <p class="sub">包含昵称、留言、图片路径、来源、状态与时间。</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap">
+              <button class="btn" id="btn-export-csv" type="button">导出 CSV（Excel）</button>
+              <button class="btn secondary" id="btn-export-json" type="button">导出 JSON（完整）</button>
+            </div>
+            <p class="hint" style="margin-top: 14px">
+              CSV 已加 BOM，Excel 直接双击不会乱码。<br>
+              JSON 含完整字段与命中敏感词记录，适合二次分析。
+            </p>
+          </div>
+          <div class="card">
+            <h3>媒体文件与备份</h3>
+            <p class="sub">签名 PNG 与留影 JPEG 存放在服务器目录，导出数据后一并拷贝即可。</p>
+            <dl class="kv">
+              <dt>媒体目录</dt><dd id="path-media">-</dd>
+              <dt>数据文件</dt><dd id="path-db">data/db.json</dd>
+              <dt>自动备份</dt><dd>data/exports/before-clear-*.json</dd>
+              <dt>媒体占用</dt><dd id="media-size">-</dd>
+            </dl>
+            <p class="hint" style="margin-top: 14px">建议每天活动结束后把整个 <code>data</code> 目录复制到移动硬盘留存。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 系统 -->
+      <section class="tab" data-tab="system">
+        <div class="columns">
+          <div class="card">
+            <h3>运行状态</h3>
+            <p class="sub">用于确认活动期间服务健康</p>
+            <dl class="kv" id="sys-kv"></dl>
+            <div class="form-actions" style="justify-content: flex-start">
+              <button class="btn secondary" id="sys-refresh" type="button">刷新</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>修改管理员口令</h3>
+            <p class="sub">建议在活动开始前完成修改并妥善保存</p>
+            <form id="password-form">
+              <label class="field-row"><span>当前口令</span><input type="password" id="pwd-current" autocomplete="current-password"></label>
+              <label class="field-row"><span>新口令（至少 8 位）</span><input type="password" id="pwd-next" autocomplete="new-password"></label>
+              <label class="field-row"><span>确认新口令</span><input type="password" id="pwd-confirm" autocomplete="new-password"></label>
+              <button class="btn block" type="submit">保存新口令</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div id="boot-error" hidden></div>
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>

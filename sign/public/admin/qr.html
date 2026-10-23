@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>其他设备访问 · 管理后台</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="qr-page">
+  <main class="qr-panel">
+    <div class="qr-logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path d="M4 36c6-9 10-14 15-14s9 5 15 15" stroke="#e0b45c" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="33" cy="13" r="4" stroke="#f7f2e8" stroke-width="1.6" opacity=".8"/>
+      </svg>
+    </div>
+    <h1>在手机 / 平板上打开后台</h1>
+    <p class="qr-sub">与服务器连接同一局域网，扫描二维码即可打开；需要用管理员口令登录。</p>
+    <div class="qr-frame"><canvas id="qr" width="280" height="280"></canvas></div>
+    <p class="qr-url" id="url">—</p>
+    <div class="qr-actions">
+      <button class="btn" id="copy" type="button">复制地址</button>
+      <a class="btn secondary" href="/admin">在本机打开</a>
+      <a class="btn secondary" href="/">返回大屏</a>
+    </div>
+    <p class="hint">扫码后打不开？确认同一 Wi-Fi；必要时运行「开放防火墙端口.bat」放行端口。</p>
+  </main>
+  <script type="module" src="/admin/qr.js"></script>
+</body>
+</html>

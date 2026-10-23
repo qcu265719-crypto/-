@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>打印留念 · 山水留痕</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/print.css">
+</head>
+<body>
+  <div class="toolbar no-print">
+    <button id="btn-print" type="button">打印留念</button>
+    <button id="btn-close" type="button">关闭</button>
+    <span id="status">正在准备…</span>
+  </div>
+  <main class="sheet">
+    <canvas id="poster" width="1080" height="1440"></canvas>
+  </main>
+  <div id="boot-error" hidden></div>
+  <script type="module" src="/print.js"></script>
+</body>
+</html>
